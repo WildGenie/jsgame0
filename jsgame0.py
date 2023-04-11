@@ -113,9 +113,7 @@ def is_valid(name):
     if not name[0].isalpha():
         return False
     no_underscore = name.replace('_', '')
-    if no_underscore.islower() and no_underscore.isalnum():
-        return True
-    return False
+    return bool(no_underscore.islower() and no_underscore.isalnum())
 
 def list_directory(directory, accepted=()):
     """Return a list of files in directory with extensions in accepted.
@@ -154,9 +152,10 @@ def print_font_load(filenames):
     for f in filenames:
         name, extension = os.path.splitext(f)
         print('@font-face {')
-        print("  font-family: '{}';".format(name))
-        print("  src: url('fonts/{}') format('{}');".format(
-            f, FONT_EXTENSION_SET.get(extension.strip().lower())))
+        print(f"  font-family: '{name}';")
+        print(
+            f"  src: url('fonts/{f}') format('{FONT_EXTENSION_SET.get(extension.strip().lower())}');"
+        )
         print("""  font-weight: normal;
   font-style: normal;
 }""")
@@ -189,7 +188,7 @@ def print_audio_load(filenames, section_ID='soundLoader', directory='sounds'):
     if len(filenames) <= 0:
         return
 
-    print('<section id="{}" class="hidden">'.format(section_ID))
+    print(f'<section id="{section_ID}" class="hidden">')
     for f in filenames:
         name, _ = os.path.splitext(f)
         print("""  <audio class="hidden" controls preload="auto" \
@@ -219,16 +218,14 @@ def print_javascript(lines):
  * Summary
  * ---''')
     for o in TRICKY_CASES:
-        print(' * {}: {}'.format(o, counter[o]))
+        print(f' * {o}: {counter[o]}')
     print(' */')
 
     # Figure out the indent level for each line
     indents = [len(line) - len(line.lstrip()) for line in lines]
     if any(i > 0 for i in indents):
         # If a line is indented, then half the indent until the indent is odd
-        while True:
-            if any((i % 2) == 1 for i in indents):
-                break
+        while all(i % 2 != 1 for i in indents):
             for i in range(len(indents)):
                 indents[i] = indents[i] // 2
 
@@ -258,30 +255,22 @@ def print_javascript(lines):
         cleaned = line.lstrip()
         if len(cleaned) <= 0:
             print()
-        else:
-##            end = cleaned.find('#')
-##            if end < 0:
-##                end = len(cleaned)
-##            else:
-##                while cleaned[end-1].isspace():
-##                    end -= 1
-
-            if indent <= 0:
-                if cleaned.startswith('def '):
-                    print('function ' + cleaned[4:])
-                else:
-                    print(cleaned)
+        elif indent <= 0:
+            if cleaned.startswith('def '):
+                print(f'function {cleaned[4:]}')
             else:
-                print('  ' * indent, end='')
-                if cleaned.startswith('def '):
-                    print(cleaned[4:])
-                else:
-                    print(cleaned.replace('self.', 'this.'))
+                print(cleaned)
+        else:
+            print('  ' * indent, end='')
+            if cleaned.startswith('def '):
+                print(cleaned[4:])
+            else:
+                print(cleaned.replace('self.', 'this.'))
 
         last_indent = indent
 
     # Close outstanding blocks
-    while 0 < last_indent:
+    while last_indent > 0:
         last_indent -= 1
         print(('  ' * last_indent) + '}')
 
@@ -360,7 +349,7 @@ if __name__ == '__main__':
                 ('Music:', music)]:
                 print(header)
                 for f in filenames:
-                    print('\t{}'.format(f))
+                    print(f'\t{f}')
             parser.exit()
 
         name, _ = os.path.splitext(os.path.basename(args.path))
