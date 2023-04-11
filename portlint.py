@@ -54,8 +54,7 @@ class _PortParser(html.parser.HTMLParser):
             # Check the JavaScript port
             for case in TRICKY_CASES:
                 if case in data:
-                    self.errors.append(
-                        '"{}" found in JavaScript!'.format(case))
+                    self.errors.append(f'"{case}" found in JavaScript!')
             in_comment = False
             for line in data.splitlines():
                 if '/*' in line:
@@ -69,15 +68,14 @@ class _PortParser(html.parser.HTMLParser):
                 index = line.find('//')
                 if index >= 0:
                     # Remove the inline comment
-                    line = line[0:index].rstrip()
+                    line = line[:index].rstrip()
                 # Check the endings of lines that are not comments
                 cleaned = line.rstrip()
                 if len(cleaned) != len(line):
                     self.errors.append('''Trailing whitespace in line:
 {}'''.format(cleaned))
-                if len(cleaned) > 0:
-                    if not cleaned.endswith(LINE_ENDINGS):
-                        self.errors.append('''Line does not end correctly:
+                if len(cleaned) > 0 and not cleaned.endswith(LINE_ENDINGS):
+                    self.errors.append('''Line does not end correctly:
 {}'''.format(cleaned))
 
 
@@ -265,11 +263,12 @@ if __name__ == '__main__':
         paths = [args.path]
     elif os.path.isdir(args.path):
         filenames = os.listdir(args.path)
-        for filename in filenames:
-            if filename.endswith('.html'):
-                paths.append(os.path.join(args.path, filename))
-
-    if len(paths) > 0:
+        paths.extend(
+            os.path.join(args.path, filename)
+            for filename in filenames
+            if filename.endswith('.html')
+        )
+    if paths:
         for path in paths:
             with open(path, 'r', encoding='utf-8') as f:
                 source = f.read()
@@ -278,7 +277,7 @@ if __name__ == '__main__':
             errors = port_parser.get_errors()
             if len(errors) > 0:
                 if len(paths) > 1:
-                    print('==> {} <=='.format(path))
+                    print(f'==> {path} <==')
                 for error in errors:
                     print(error)
     else:
